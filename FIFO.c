@@ -7,44 +7,48 @@ typedef struct Node {
 } Node;
 
 void receba(Node **becker, Node **beckerend, int x, int *pos) {
+    // Verificacao se o valor já existe na lista
+    Node *aux = *becker;
+    while (aux != NULL) {
+        if (aux->valor == x) {
+            printf("O valor %d ja existe na lista. Nao sera inserido.\n", x);
+            return; 
+        }
+        aux = aux->prox;
+    }
+
     Node *novo = (Node*)malloc(sizeof(Node));
     if (novo) {
         novo->valor = x;
         novo->prox = NULL;
 
-        if (*becker == NULL) {  // Lista vazia
+        if (*becker == NULL) { 
             *becker = novo;
             *beckerend = novo;
         } else {
-            Node *aux = *becker;
             int contLista = 0;
+            aux = *becker;
             while (aux != NULL) {
                 contLista++;
                 aux = aux->prox;
             }
-            if (contLista < 4) {  // Menos de 4 elementos, adicionar ao final
+            if (contLista < 4) {  //Menos de 4 elementos, adicionar ao final
                 (*beckerend)->prox = novo;
                 *beckerend = novo;
-            } else {  // Se a lista já tiver 4 elementos, substituir 
+            } else {  //Se a lista ja tiver 4 elementos, substituir 
                 Node *atual = *becker;
                 int i = 0;
-
-                // Caminhar até a posição correta (usando *pos para o comportamento circular)
                 while (i < *pos) {
                     atual = atual->prox;
                     i++;
                 }
 
-                //Substituir o valor no nó atual
                 atual->valor = x;
-
-                //Atualizar a posição para o próximo elemento a ser substituído
-                *pos = (*pos + 1) % 4;  // Volta para 0 após chegar a 4
+                *pos = (*pos + 1) % 4;  //Volta para  a posicao 0 após chegar a posição 4
             }
         }
     }
 }
-
 
 void imprimir(Node *becker) {
     Node *aux = becker;
@@ -58,23 +62,31 @@ void imprimir(Node *becker) {
 int main() {
     Node *becker = NULL;
     Node *beckerend = NULL;
-    int pos = 0;  // Controla a posição de substituição na lista circular
+    int pos = 0;  // Controla a posicao de substituição na lista
     receba(&becker, &beckerend, 1, &pos);
     receba(&becker, &beckerend, 2, &pos); 
     receba(&becker, &beckerend, 3, &pos); 
     receba(&becker, &beckerend, 4, &pos); 
     imprimir(becker); 
-    receba(&becker, &beckerend, 5, &pos);  //Substitui 1 (na posição 0)
-    imprimir(becker);  //5 2 3 4
 
-    receba(&becker, &beckerend, 6, &pos);  //Substitui 2 (na posição 1)
-    imprimir(becker);  //5 6 3 4
+    receba(&becker, &beckerend, 3, &pos);  //Tenta inserir 3 novamente
+    imprimir(becker); // 1 2 3 4 
 
-    receba(&becker, &beckerend, 7, &pos);  //Substitui 3 (na posição 2)
-    imprimir(becker);  //5 6 7 4
+    receba(&becker, &beckerend, 5, &pos); 
+    imprimir(becker);  // 5 2 3 4
 
-    receba(&becker, &beckerend, 8, &pos);  //Substitui 4 (na posição 3)
-    imprimir(becker);  //5 6 7 8
+    receba(&becker, &beckerend, 6, &pos);  
+    imprimir(becker);  // 5 6 3 4
 
+    receba(&becker, &beckerend, 7, &pos); 
+
+    receba(&becker, &beckerend, 7, &pos); 
+    imprimir(becker);  // 5 6 7 4
+
+    receba(&becker, &beckerend, 8, &pos);
+    imprimir(becker);  // 5 6 7 8
+
+    receba(&becker, &beckerend, 10, &pos);
+    imprimir(becker);  // 10 6 7 8
     return 0;
 }
