@@ -2,73 +2,93 @@
 #include <stdlib.h>
 
 typedef struct Node {
-    int valor;
-    int frequencia;
+    int page;
+    int frequency;
     struct Node *prox;
 } Node;
 
-Node* criarNode(int valor) {
-    Node *novo = (Node*)malloc(sizeof(Node));
-    if (novo) {
-        novo->valor = valor;
-        novo->frequencia = 1;
-        novo->prox = NULL;
-    }
-    return novo;
-}
-
-Node* encontrarLFU(Node *becker) {
-    Node *menorFreq = becker;
-    Node *aux = becker->prox;
-
+void incrementar_frequencia(Node *becker, int page) {
+    Node *aux = becker;
     while (aux != NULL) {
-        if (aux->frequencia < menorFreq->frequencia) {
-            menorFreq = aux;
-        }
-        aux = aux->prox;
-    }
-    return menorFreq;
-}
-
-void receba(Node **becker, Node **beckerend, int x) {
-    Node *aux = *becker;
-
-    while (aux != NULL) {
-        if (aux->valor == x) {
-            aux->frequencia++;
+        if (aux->page == page) {
+            aux->frequency++;
+            printf("\nAcessando pagina %d, frequencia aumentada para %d.\n", page, aux->frequency);
             return;
         }
         aux = aux->prox;
     }
+}
 
-    Node *novo = criarNode(x);
-    if (*becker == NULL) {
-        *becker = novo;
-        *beckerend = novo;
-    } else {
-        int contLista = 0;
-        aux = *becker;
+void substituir_lfu(Node **becker, Node **beckerend, int page) {
+    Node *anterior = NULL;
+    Node *atual = *becker;
+    Node *lfu = *becker;
+    Node *lfu_anterior = NULL;
 
-        while (aux != NULL) {
-            contLista++;
-            aux = aux->prox;
+    // Encontra o nó LFU
+    while (atual != NULL) {
+        if (atual->frequency < lfu->frequency) {
+            lfu = atual;
+            lfu_anterior = anterior;
         }
+        anterior = atual;
+        atual = atual->prox;
+    }
 
-        if (contLista < 4) {
+    // Remove o nó LFU
+    if (lfu_anterior == NULL) { // LFU é o primeiro nó
+        *becker = (*becker)->prox;
+        if (*becker == NULL) {
+            *beckerend = NULL;
+        }
+    } else {
+        lfu_anterior->prox = lfu->prox;
+        if (lfu == *beckerend) {
+            *beckerend = lfu_anterior;
+        }
+    }
+    printf("\nSubstituindo pagina %d com frequencia %d pela nova pagina %d.\n", lfu->page, lfu->frequency, page);
+    free(lfu);
+}
+
+void inserir_pagina(Node **becker, Node **beckerend, int page, int max_size) {
+    Node *aux = *becker;
+    int tamanho = 0;
+
+    while (aux != NULL) { // Verifica se a página já está presente
+        if (aux->page == page) {
+            incrementar_frequencia(*becker, page);
+            return;
+        }
+        aux = aux->prox;
+        tamanho++;
+    }
+
+    if (tamanho >= max_size) { // Se a lista estiver cheia, substitui o nó LFU
+        substituir_lfu(becker, beckerend, page);
+    }
+
+    Node *novo = (Node*)malloc(sizeof(Node));
+    if (novo) {
+        novo->page = page;
+        novo->frequency = 1;
+        novo->prox = NULL;
+        
+        if (*becker == NULL) { 
+            *becker = novo;
+            *beckerend = novo;
+        } else { // Adiciona ao final da lista
             (*beckerend)->prox = novo;
             *beckerend = novo;
-        } else {
-            Node *lfu = encontrarLFU(*becker);
-            lfu->valor = x;
-            lfu->frequencia = 1;
         }
+        printf("\nPagina %d adicionada com frequencia inicial 1.\n", page);
     }
 }
 
-void devolva(Node *becker) {
+void imprimir(Node *becker) {
     Node *aux = becker;
     while (aux != NULL) {
-        printf("Valor: %d, Frequência: %d\n", aux->valor, aux->frequencia);
+        printf("\nPagina %d (freq: %d) ", aux->page, aux->frequency);
         aux = aux->prox;
     }
     printf("\n");
@@ -77,20 +97,28 @@ void devolva(Node *becker) {
 int main() {
     Node *becker = NULL;
     Node *beckerend = NULL;
+    int max_size = 4;  // Tamanho máximo da lista de páginas
 
-    receba(&becker, &beckerend, 1);
-    receba(&becker, &beckerend, 2);
-    receba(&becker, &beckerend, 3);
-    receba(&becker, &beckerend, 4);
-    devolva(becker);
+    inserir_pagina(&becker, &beckerend, 1, max_size);
+    inserir_pagina(&becker, &beckerend, 2, max_size);
+    inserir_pagina(&becker, &beckerend, 3, max_size);
+    inserir_pagina(&becker, &beckerend, 4, max_size);
+    imprimir(becker);
 
-    receba(&becker, &beckerend, 2);
-    receba(&becker, &beckerend, 1);
-    receba(&becker, &beckerend, 5);
-    devolva(becker);
+    inserir_pagina(&becker, &beckerend, 3, max_size);
+    imprimir(becker);  // Página 3 tem frequência aumentada
 
-    receba(&becker, &beckerend, 6);
-    devolva(becker);
+    inserir_pagina(&becker, &beckerend, 5, max_size);  // Substitui a página 1
+    imprimir(becker);
+
+    inserir_pagina(&becker, &beckerend, 2, max_size);  // Frequência de página 2 aumentada
+    imprimir(becker);
+
+    inserir_pagina(&becker, &beckerend, 6, max_size);  // Substitui a página com menor frequência
+    imprimir(becker);
+
+    inserir_pagina(&becker, &beckerend, 4, max_size);  // Frequência de página 4 aumentada
+    imprimir(becker);
 
     return 0;
 }

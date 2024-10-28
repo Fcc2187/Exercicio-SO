@@ -8,7 +8,6 @@ typedef struct Node {
 
 void receba(Node **becker, Node **beckerend, int page, int *pos, int max_size) {
     Node *aux = *becker;
-
     // Verifica se a página já está na lista
     while (aux != NULL) {
         if (aux->page == page) {
@@ -22,7 +21,6 @@ void receba(Node **becker, Node **beckerend, int page, int *pos, int max_size) {
     if (novo) {
         novo->page = page;
         novo->prox = NULL;
-
         // Se a lista estiver vazia, inicializa com o novo nó
         if (*becker == NULL) {
             *becker = novo;
